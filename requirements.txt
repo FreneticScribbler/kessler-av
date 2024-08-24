@@ -1,1 +1,2 @@
 # Runtime dependencies
+pyserial==3.5

@@ -4,3 +4,4 @@ LOGGER = get_logger(__package__)
 
 PROTOCOL_2K = 'protocol2k'
 SCHEME_TCP = 'tcp'
+SCHEME_SERIAL = 'serial:'
