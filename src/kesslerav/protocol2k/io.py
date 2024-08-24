@@ -2,6 +2,7 @@ import itertools
 import socket
 import struct
 import serial
+import time
 
 from ..constants import LOGGER
 from enum import IntEnum, unique
@@ -18,7 +19,7 @@ class Command(IntEnum):
   RECALL_VIDEO_STATUS = 4
   ERROR = 16
   PANEL_LOCK = 30
-  QUERY_OUTPUT_STATUS = 5
+  QUERY_OUTPUT_STATUS = 6
   QUERY_PANEL_LOCK = 31
   IDENTIFY_MACHINE = 61
   DEFINE_MACHINE = 62
@@ -273,7 +274,7 @@ class TcpDevice:
     ) -> list[Instruction]:
     req_bytes= Codec.encode(instruction)
     conn.send(req_bytes)
-
+    print(req_bytes)
     # Device can return multiple instructions when its physical controls are
     # used. To capture them all (to reconstruct device state) we read using a
     # buffer that can hold multiple instructions and then return them all in
@@ -281,7 +282,9 @@ class TcpDevice:
     result: list[Instruction]= []
     try:
       while len(result) < 1:
+        time.sleep(0.5) # Slow down to prevent 'port already in use' errors when interacting with serial over TCP TODO configurable, default off
         data= conn.recv(TcpDevice.BUFFER_SIZE_BYTES)
+        print(data)
         responses= struct.iter_unpack(Instruction.FORMAT, data)
         for response in responses:
           resp_bytes= response[0].to_bytes(Instruction.SIZE_BYTES)
@@ -357,8 +360,6 @@ class SerialDevice:
       conn
     ) -> list[Instruction]:
     req_bytes= Codec.encode(instruction)
-    print("write")
-    print(req_bytes)
     conn.write(req_bytes)
 
     # Device can return multiple instructions when its physical controls are
@@ -369,20 +370,17 @@ class SerialDevice:
     try:
       while len(result) < 1:
         data= conn.read(4)
-        print("read")
-        print(data)
         responses= struct.iter_unpack(Instruction.FORMAT, data)
         for response in responses:
           resp_bytes= response[0].to_bytes(Instruction.SIZE_BYTES)
           instruction= Codec.decode(resp_bytes)
-          print(instruction)
           result.append(instruction)
-            if len(data) == 0:
-                break
+        if len(data) == 0:
+          break
     except TimeoutError:
       LOGGER.info(
         'Timed out waiting for response. Ignoring, since another thread may '
         'have processed the response already.'
       )
-    #conn.close()
+
     return result

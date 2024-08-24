@@ -14,11 +14,6 @@ class MediaSwitch(Protocol):
         Select the specified video input
         """
 
-    def select_audio_source(self, input: int, output: int) -> None:
-        """
-        Select the specified audio routing
-        """
-
     def lock(self):
         """
         Lock front panel
@@ -59,3 +54,16 @@ class MediaSwitch(Protocol):
         """
         Returns the number of outputs the switch has
         """
+
+
+class MediaMatrix(MediaSwitch):
+    def select_route(self, input: int, output: int) -> None:
+        """ Define a route, input to output """
+
+    @property
+    def selected_source(self, output: int) -> int:
+        """ Returns input number for given output """
+
+    @property
+    def routing_table(self):
+        """ Returns current matrix routing setup """
